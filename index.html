@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aguacates Colombia</title>
+    <link rel="stylesheet" href="Cs/styles.css" />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  </head>
+
+  <body>
+    <header class="navbar">
+      <div class="logo">🥑 AgroCol</div>
+
+      <nav class="menu">
+        <a href="#inicio" data-translate="menu1">Inicio</a>
+        <a href="#quienes" data-translate="menu2">Quiénes somos</a>
+        <a href="#producto" data-translate="menu3">Producto</a>
+        <a href="#proceso" data-translate="menu4">Exportación</a>
+        <a href="#mercado" data-translate="menu5">Mercado</a>
+        <a href="#contacto" data-translate="menu6">Contacto</a>
+        <a href="#tracking" data-translate="menu7">Rastreo</a>
+      </nav>
+
+      <select id="language" onchange="changeLang()">
+        <option value="es">ES 🇪🇸</option>
+        <option value="en">EN 🇬🇧</option>
+        <option value="de">DE 🇩🇪</option>
+        <option value="fr">FR 🇫🇷</option>
+        <option value="zh">中文 🇨🇳</option>
+        <option value="ja">日本語 🇯🇵</option>
+      </select>
+      <a href="#" class="cart-icon" id="cart-icon">
+        🛒 <span id="cart-count">0</span>
+      </a>
+      <a href="#" class="cta-btn" data-translate="cotizar">Cotizar</a>
+    </header>
+
+    <section class="hero" id="inicio">
+      <div class="hero-text">
+        <h1 data-translate="titulo">Exportamos Aguacate Hass Premium</h1>
+        <p class="origen" data-translate="origen">
+          🇨🇴 Orgullosamente colombiano
+        </p>
+
+        <p data-translate="descripcion">
+          Desde Colombia hacia Europa y Asia. Calidad certificada, producción
+          sostenible y logística internacional.
+        </p>
+
+        <div class="badges">
+          <span data-translate="badge1">🌍 Exportación global</span>
+          <span data-translate="badge2">🇩🇪 Colombia</span>
+          <span data-translate="badge3">📦 Alta producción</span>
+        </div>
+
+        <div class="hero-buttons">
+          <a href="#" class="btn-primary" data-translate="btn1"
+            >Solicitar cotización</a
+          >
+          <a href="#" class="btn-secondary" data-translate="btn2"
+            >Ver producto</a
+          >
+        </div>
+      </div>
+
+      <div class="hero-img">
+        <div class="logo-container">
+          <img src="img/images.webp" alt="logo" class="logo-img" />
+        </div>
+
+        <div class="circle-bg"></div>
+      </div>
+    </section>
+
+    <section class="producto" id="quienes">
+      <h2 data-translate="q1">Quiénes somos</h2>
+
+      <p class="subtitulo" data-translate="qdesc">
+        Somos una empresa colombiana dedicada a la producción y exportación de
+        aguacate Hass premium.
+      </p>
+
+      <div class="cards">
+        <div class="card scroll-img">
+          <h3 data-translate="q2">🌱 Misión</h3>
+          <p data-translate="q2d">
+            Brindar productos de alta calidad internacional.
+          </p>
+        </div>
+
+        <div class="card scroll-img">
+          <h3 data-translate="q3">🚀 Visión</h3>
+          <p data-translate="q3d">
+            Ser líderes en exportación hacia Europa y Asia.
+          </p>
+        </div>
+
+        <div class="card scroll-img">
+          <h3 data-translate="q4">💚 Valores</h3>
+          <p data-translate="q4d">Compromiso, calidad y sostenibilidad.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="producto" id="producto">
+      <h2 data-translate="p1">Nuestro Aguacate Hass</h2>
+
+      <p class="subtitulo" data-translate="pdesc">
+        Cultivado en tierras colombianas con estándares internacionales de
+        calidad.
+      </p>
+
+      <div class="cards">
+        <div class="card scroll-img">
+          <img src="img/descargar.jpg" alt="" />
+          <h3 data-translate="p2">Calidad Premium</h3>
+          <p data-translate="p2d">
+            Seleccionado bajo estrictos estándares de exportación.
+          </p>
+        </div>
+
+        <div class="card scroll-img">
+          <img src="img/images.webp" alt="" />
+          <h3 data-translate="p3">Exportación Internacional</h3>
+          <p data-translate="p3d">
+            Envíos constantes a Europa y Asia, especialmente Alemania.
+          </p>
+        </div>
+
+        <div class="card scroll-img">
+          <img src="img/descargar.jpg" alt="" />
+          <h3 data-translate="p4">Producción Sostenible</h3>
+          <p data-translate="p4d">
+            Procesos responsables con el medio ambiente.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section id="product" class="section">
+      <h2 data-translate="catalogo">Catálogo Exportación</h2>
+
+      <div class="cards">
+        <div class="card">
+          <h3 data-translate="prod1">Caja Hass (4kg)</h3>
+          <p class="price" data-price="25">$25 USD</p>
+          <button onclick="add('Caja Hass 4kg', 25, 4)" data-translate="add">
+            Añadir
+          </button>
+        </div>
+
+        <div class="card">
+          <h3 data-translate="prod2">Media tonelada</h3>
+          <p class="price" data-price="3000">$3000 USD</p>
+          <button
+            onclick="add('Media tonelada', 3000, 500)"
+            data-translate="add"
+          >
+            Añadir
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <div id="cart-modal" class="modal">
+      <div class="modal-content">
+        <h3 data-translate="cart_title">🛒 Mi Carrito</h3>
+        <div id="cart-list"></div>
+        <div class="total-box">
+          <strong data-translate="cart_total">Total:</strong>
+          <span id="cart-total">$0</span>
+        </div>
+        <button id="checkout-btn" class="btn-primary" data-translate="checkout">
+          Finalizar compra
+        </button>
+        <button id="close-modal" class="cancel" data-translate="close">
+          Cerrar
+        </button>
+      </div>
+    </div>
+
+    <section id="tracking" class="tracking section">
+      <h2 data-translate="tracking_title">📦 Rastreo de Pedido</h2>
+      <p data-translate="tracking_desc">
+        Ingresa tu número de pedido para ver el estado actual.
+      </p>
+      <div class="tracking-form">
+        <input
+          type="text"
+          id="tracking-id"
+          placeholder="Ej: AGRO-123456"
+          data-translate="tracking_placeholder"
+        />
+        <button
+          id="tracking-btn"
+          class="btn-primary"
+          data-translate="tracking_btn"
+        >
+          Rastrear
+        </button>
+      </div>
+      <div id="tracking-result" class="tracking-result"></div>
+    </section>
+
+    <button id="back-to-top" class="back-to-top" data-translate="back_to_top">
+      ↑
+    </button>
+
+    <script src="JS/javascript.js"></script>
+
+    <script>
+      function changeLang() {
+        window.changeLangReal();
+      }
+    </script>
+  </body>
+</html>
