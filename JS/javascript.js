@@ -346,10 +346,51 @@ const translations = {
     order_not_found: "❌ 注文番号が見つかりません。",
     back_to_top: "↑",
   },
+  en: {}, de: {}, fr: {}, zh: {}, ja: {}
 };
 
+
+// Asegurar que todos los idiomas tengan al menos un objeto vacío
+['en','de','fr','zh','ja'].forEach(lang => { if (!translations[lang]) translations[lang] = {}; });
+
 // ========================
-// FUNCIONES DE IDIOMA
+// CONVERSIÓN DE MONEDA
+// ========================
+const exchangeRates = {
+  es: { symbol: 'COP', rate: 4000 },     // 1 USD = 4000 COP (aproximado)
+  en: { symbol: 'USD', rate: 1 },
+  de: { symbol: 'EUR', rate: 0.92 },
+  fr: { symbol: 'EUR', rate: 0.92 },
+  zh: { symbol: 'CNY', rate: 7.25 },
+  ja: { symbol: 'JPY', rate: 150 }
+};
+
+function formatPrice(usdPrice, lang) {
+  const rateInfo = exchangeRates[lang] || exchangeRates.en;
+  const converted = usdPrice * rateInfo.rate;
+  const symbol = rateInfo.symbol;
+  // Formato según moneda
+  if (symbol === 'JPY') return `${symbol} ${Math.round(converted)}`;
+  if (symbol === 'COP') return `${symbol} ${Math.round(converted).toLocaleString()}`;
+  return `${symbol} ${converted.toFixed(2)}`;
+}
+
+// Función para actualizar precios en la página según idioma
+function updatePrices() {
+  const lang = document.getElementById("language").value;
+  const allPrices = document.querySelectorAll('.price');
+  allPrices.forEach(priceEl => {
+    const usdValue = parseFloat(priceEl.getAttribute('data-price'));
+    if (!isNaN(usdValue)) {
+      priceEl.innerText = formatPrice(usdValue, lang);
+    }
+  });
+  // Actualizar total en carrito si está visible
+  updateCartDisplay();
+}
+
+// ========================
+// FUNCIONES DE IDIOMA (sobrescritas para incluir actualización de precios)
 // ========================
 window.changeLangReal = function () {
   const select = document.getElementById("language");
@@ -357,7 +398,7 @@ window.changeLangReal = function () {
   localStorage.setItem("preferredLanguage", lang);
 
   const elements = document.querySelectorAll("[data-translate]");
-  elements.forEach((el) => {
+  elements.forEach(el => {
     const key = el.getAttribute("data-translate");
     if (translations[lang] && translations[lang][key]) {
       el.innerText = translations[lang][key];
@@ -366,29 +407,22 @@ window.changeLangReal = function () {
     }
   });
 
-  updateCartDisplay();
-  if (window.lastTrackedOrderId) {
-    displayTrackingResult(window.lastTrackedOrderId);
-  }
+  updatePrices();            // Actualizar precios en catálogo y carrito
+  updateCartDisplay();       // Refresca carrito con nueva moneda
+  if (window.lastTrackedOrderId) displayTrackingResult(window.lastTrackedOrderId);
+  updateShippingTime();
 };
 
 // ========================
-// CARRITO DE COMPRAS
+// CARRITO
 // ========================
 let cart = [];
 
-function saveCart() {
-  localStorage.setItem("cart", JSON.stringify(cart));
-}
+function saveCart() { localStorage.setItem("cart", JSON.stringify(cart)); }
+function loadCart() { const stored = localStorage.getItem("cart"); cart = stored ? JSON.parse(stored) : []; updateCartDisplay(); }
 
-function loadCart() {
-  const stored = localStorage.getItem("cart");
-  cart = stored ? JSON.parse(stored) : [];
-  updateCartDisplay();
-}
-
-function addToCart(name, price, weight) {
-  cart.push({ name, price, weight });
+function addToCart(name, priceUSD, weight) {
+  cart.push({ name, priceUSD, weight });
   saveCart();
   updateCartDisplay();
   alert(`✅ ${name} añadido al carrito`);
@@ -400,8 +434,8 @@ function removeFromCart(index) {
   updateCartDisplay();
 }
 
-function getTotal() {
-  return cart.reduce((sum, item) => sum + item.price, 0);
+function getTotalUSD() {
+  return cart.reduce((sum, item) => sum + item.priceUSD, 0);
 }
 
 function updateCartDisplay() {
@@ -412,11 +446,8 @@ function updateCartDisplay() {
   const totalSpan = document.getElementById("cart-total");
   if (cartList && totalSpan) {
     const lang = document.getElementById("language").value;
-    const removeText =
-      (translations[lang] && translations[lang]["remove"]) || "Eliminar";
-    const emptyText =
-      (translations[lang] && translations[lang]["empty_cart"]) ||
-      "🛒 El carrito está vacío";
+    const removeText = (translations[lang] && translations[lang]["remove"]) || "Eliminar";
+    const emptyText = (translations[lang] && translations[lang]["empty_cart"]) || "🛒 El carrito está vacío";
 
     if (cart.length === 0) {
       cartList.innerHTML = `<p>${emptyText}</p>`;
@@ -425,20 +456,19 @@ function updateCartDisplay() {
       cart.forEach((item, idx) => {
         const div = document.createElement("div");
         div.className = "cart-item";
+        const formattedPrice = formatPrice(item.priceUSD, lang);
         div.innerHTML = `
-          <span><strong>${item.name}</strong> - ${item.weight}kg - $${item.price} USD</span>
+          <span><strong>${item.name}</strong> - ${item.weight}kg - ${formattedPrice}</span>
           <button class="remove-btn" data-index="${idx}">${removeText}</button>
         `;
         cartList.appendChild(div);
       });
-      document.querySelectorAll(".remove-btn").forEach((btn) => {
-        btn.addEventListener("click", (e) => {
-          const idx = parseInt(btn.getAttribute("data-index"));
-          removeFromCart(idx);
-        });
+      document.querySelectorAll(".remove-btn").forEach(btn => {
+        btn.addEventListener("click", () => removeFromCart(parseInt(btn.dataset.index)));
       });
     }
-    totalSpan.innerText = `$${getTotal()} USD`;
+    const totalUSD = getTotalUSD();
+    totalSpan.innerText = formatPrice(totalUSD, lang);
   }
 }
 
@@ -448,29 +478,24 @@ function updateCartDisplay() {
 let orders = {};
 let lastTrackedOrderId = null;
 
-function saveOrders() {
-  localStorage.setItem("orders", JSON.stringify(orders));
-}
+function saveOrders() { localStorage.setItem("orders", JSON.stringify(orders)); }
+function loadOrders() { const stored = localStorage.getItem("orders"); orders = stored ? JSON.parse(stored) : {}; }
 
-function loadOrders() {
-  const stored = localStorage.getItem("orders");
-  orders = stored ? JSON.parse(stored) : {};
-}
+function generateOrderId() { return "AGRO-" + Math.floor(Math.random() * 1000000); }
 
-function generateOrderId() {
-  return "AGRO-" + Math.floor(Math.random() * 1000000);
-}
-
-function createOrder() {
+function createOrder(customerName, paymentMethod, userEmail) {
   if (cart.length === 0) return null;
   const orderId = generateOrderId();
-  const total = getTotal();
+  const totalUSD = getTotalUSD();
   const date = new Date().toISOString();
   orders[orderId] = {
     items: [...cart],
-    total: total,
+    totalUSD: totalUSD,
     date: date,
     status: "pending",
+    customerName: customerName,
+    paymentMethod: paymentMethod,
+    email: userEmail
   };
   saveOrders();
   cart = [];
@@ -481,16 +506,9 @@ function createOrder() {
 
 function getOrderStatusText(statusKey) {
   const lang = document.getElementById("language").value;
-  const map = {
-    pending: "order_status_pending",
-    processing: "order_status_processing",
-    shipped: "order_status_shipped",
-    delivered: "order_status_delivered",
-  };
-  const translationKey = map[statusKey];
-  return (
-    (translations[lang] && translations[lang][translationKey]) || statusKey
-  );
+  const map = { pending: "order_status_pending", processing: "order_status_processing", shipped: "order_status_shipped", delivered: "order_status_delivered" };
+  const key = map[statusKey];
+  return (translations[lang] && translations[lang][key]) || statusKey;
 }
 
 function displayTrackingResult(orderId) {
@@ -499,117 +517,165 @@ function displayTrackingResult(orderId) {
   const order = orders[orderId];
   if (!order) {
     const lang = document.getElementById("language").value;
-    const notFoundText =
-      (translations[lang] && translations[lang]["order_not_found"]) ||
-      "❌ Número de pedido no encontrado.";
-    resultDiv.innerHTML = `<p>${notFoundText}</p>`;
+    const notFound = (translations[lang] && translations[lang]["order_not_found"]) || "❌ Número de pedido no encontrado.";
+    resultDiv.innerHTML = `<p>${notFound}</p>`;
     window.lastTrackedOrderId = null;
     return;
   }
-
   window.lastTrackedOrderId = orderId;
 
   const lang = document.getElementById("language").value;
   const statusText = getOrderStatusText(order.status);
   const dateFormatted = new Date(order.date).toLocaleString();
   let itemsHtml = "<ul>";
-  order.items.forEach((item) => {
-    itemsHtml += `<li>${item.name} (${item.weight}kg) - $${item.price} USD</li>`;
+  order.items.forEach(item => {
+    const formattedPrice = formatPrice(item.priceUSD, lang);
+    itemsHtml += `<li>${item.name} (${item.weight}kg) - ${formattedPrice}</li>`;
   });
   itemsHtml += "</ul>";
 
-  const orderLabel =
-    lang === "es"
-      ? "Pedido:"
-      : lang === "en"
-        ? "Order:"
-        : lang === "de"
-          ? "Bestellung:"
-          : lang === "fr"
-            ? "Commande:"
-            : lang === "zh"
-              ? "订单："
-              : "注文：";
-  const dateLabel =
-    lang === "es"
-      ? "📅 Fecha:"
-      : lang === "en"
-        ? "📅 Date:"
-        : lang === "de"
-          ? "📅 Datum:"
-          : lang === "fr"
-            ? "📅 Date:"
-            : lang === "zh"
-              ? "📅 日期："
-              : "📅 日付：";
-  const totalLabel =
-    lang === "es"
-      ? "💰 Total:"
-      : lang === "en"
-        ? "💰 Total:"
-        : lang === "de"
-          ? "💰 Gesamt:"
-          : lang === "fr"
-            ? "💰 Total:"
-            : lang === "zh"
-              ? "💰 总计："
-              : "💰 合計：";
-  const statusLabel =
-    lang === "es"
-      ? "📦 Estado:"
-      : lang === "en"
-        ? "📦 Status:"
-        : lang === "de"
-          ? "📦 Status:"
-          : lang === "fr"
-            ? "📦 Statut:"
-            : lang === "zh"
-              ? "📦 状态："
-              : "📦 ステータス：";
-  const productsLabel =
-    lang === "es"
-      ? "🛍️ Productos:"
-      : lang === "en"
-        ? "🛍️ Products:"
-        : lang === "de"
-          ? "🛍️ Produkte:"
-          : lang === "fr"
-            ? "🛍️ Produits:"
-            : lang === "zh"
-              ? "🛍️ 产品："
-              : "🛍️ 製品：";
+  const orderLabel = (translations[lang] && translations[lang]["order_label"]) || "Pedido:";
+  const dateLabel = (translations[lang] && translations[lang]["date_label"]) || "📅 Fecha:";
+  const totalLabel = (translations[lang] && translations[lang]["total_label"]) || "💰 Total:";
+  const statusLabel = (translations[lang] && translations[lang]["status_label"]) || "📦 Estado:";
+  const productsLabel = (translations[lang] && translations[lang]["products_label"]) || "🛍️ Productos:";
 
+  const totalFormatted = formatPrice(order.totalUSD, lang);
   resultDiv.innerHTML = `
     <div class="tracking-card">
       <h3>📄 ${orderLabel} ${orderId}</h3>
       <p><strong>${dateLabel}</strong> ${dateFormatted}</p>
-      <p><strong>${totalLabel}</strong> $${order.total} USD</p>
+      <p><strong>${totalLabel}</strong> ${totalFormatted}</p>
       <p><strong>${statusLabel}</strong> ${statusText}</p>
       <p><strong>${productsLabel}</strong></p>
       ${itemsHtml}
+      <hr>
+      <p><strong>Cliente:</strong> ${order.customerName}</p>
+      <p><strong>Método de pago:</strong> ${order.paymentMethod}</p>
+      <p><strong>Email:</strong> ${order.email}</p>
     </div>
   `;
+
+  const timelineDiv = document.querySelector(".timeline-container");
+  if (timelineDiv) {
+    timelineDiv.style.display = "block";
+    const steps = timelineDiv.querySelectorAll(".timeline-steps .step");
+    steps.forEach(step => step.classList.remove("completed"));
+    const statusOrder = ["pending", "processing", "shipped", "delivered"];
+    const currentIndex = statusOrder.indexOf(order.status);
+    for (let i = 0; i <= currentIndex && i < steps.length; i++) {
+      steps[i].classList.add("completed");
+    }
+  }
 }
 
 // ========================
-// NUEVAS FUNCIONES: SCROLL SUAVE, MENÚ ACTIVO, BOTÓN VOLVER ARRIBA
+// TIEMPO DE ENVÍO
+// ========================
+function updateShippingTime() {
+  const countrySelect = document.getElementById("destination-country");
+  const shippingSpan = document.getElementById("shipping-estimate");
+  if (!countrySelect || !shippingSpan) return;
+  const lang = document.getElementById("language").value;
+  const country = countrySelect.value;
+  const key = `shipping_time_${country}`;
+  const text = (translations[lang] && translations[lang][key]) || translations.es[key] || "Consulta disponibilidad";
+  shippingSpan.innerText = text;
+}
+
+// ========================
+// ENVÍO DE FACTURA Y GENERACIÓN DE PDF
+// ========================
+function generatePDF(orderId, totalUSD, items, userEmail, customerName, paymentMethod) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(16);
+  doc.text("Factura de Compra - AgroCol", 20, 20);
+  doc.setFontSize(12);
+  doc.text(`Pedido: ${orderId}`, 20, 30);
+  doc.text(`Fecha: ${new Date().toLocaleString()}`, 20, 40);
+  doc.text(`Cliente: ${customerName}`, 20, 50);
+  doc.text(`Email: ${userEmail}`, 20, 60);
+  doc.text(`Método de pago: ${paymentMethod}`, 20, 70);
+  const lang = document.getElementById("language").value;
+  const totalFormatted = formatPrice(totalUSD, lang);
+  doc.text(`Total: ${totalFormatted}`, 20, 80);
+  doc.text("Productos:", 20, 90);
+  let y = 100;
+  items.forEach((item, idx) => {
+    const priceFormatted = formatPrice(item.priceUSD, lang);
+    doc.text(`${idx+1}. ${item.name} (${item.weight}kg) - ${priceFormatted}`, 20, y);
+    y += 10;
+  });
+  doc.save(`factura_${orderId}.pdf`);
+}
+
+function sendInvoiceEmail(orderId, totalUSD, items, userEmail, customerName, paymentMethod) {
+  if (!userEmail) {
+    alert("Por favor ingresa un correo para recibir la factura.");
+    return false;
+  }
+  const lang = document.getElementById("language").value;
+  const totalFormatted = formatPrice(totalUSD, lang);
+  const templateParams = {
+    to_email: userEmail,
+    order_id: orderId,
+    total: totalFormatted,
+    items: items.map(i => `${i.name} (${i.weight}kg)`).join(', '),
+    date: new Date().toLocaleString(),
+    customer_name: customerName,
+    payment_method: paymentMethod
+  };
+  if (typeof emailjs !== 'undefined' && emailjs.send && emailjs.send.toString().indexOf('TU_SERVICE_ID') === -1) {
+    emailjs.send("TU_SERVICE_ID", "TU_TEMPLATE_ID", templateParams)
+      .then(() => alert("Factura enviada a " + userEmail))
+      .catch(err => console.error("Error al enviar:", err));
+  } else {
+    alert("Simulación: Factura enviada a " + userEmail + "\nDetalles:\n" + JSON.stringify(templateParams, null, 2));
+  }
+  return true;
+}
+
+// ========================
+// DESCUENTOS PERIÓDICOS
+// ========================
+function applyPeriodicDiscounts() {
+  const today = new Date().getDay();
+  const discountProducts = document.querySelectorAll('.card[data-discount]');
+  discountProducts.forEach(card => {
+    const discountPercent = parseInt(card.dataset.discount);
+    if (discountPercent > 0 && (today === 3 || today === 5)) {
+      const priceElem = card.querySelector('.price');
+      const originalPriceUSD = parseFloat(priceElem.getAttribute('data-price'));
+      const discountedPriceUSD = originalPriceUSD * (1 - discountPercent / 100);
+      priceElem.setAttribute('data-price', discountedPriceUSD);
+      const lang = document.getElementById("language").value;
+      priceElem.innerText = formatPrice(discountedPriceUSD, lang);
+      const btn = card.querySelector('button');
+      const originalOnclick = btn.getAttribute('onclick');
+      const parts = originalOnclick.match(/add\('([^']+)',\s*(\d+),\s*(\d+)\)/);
+      if (parts) {
+        btn.setAttribute('onclick', `add('${parts[1]}', ${discountedPriceUSD}, ${parts[3]})`);
+      }
+    }
+  });
+}
+
+// ========================
+// FUNCIONES DE NAVEGACIÓN
 // ========================
 function setupSmoothScroll() {
-  document.querySelectorAll(".menu a").forEach((anchor) => {
+  document.querySelectorAll(".menu a, .btn-primary, .btn-secondary, .cta-btn").forEach(anchor => {
     anchor.addEventListener("click", function (e) {
       const targetId = this.getAttribute("href");
-      if (targetId === "#") return;
+      if (!targetId || targetId === "#" || targetId.startsWith("javascript")) return;
       const targetElement = document.querySelector(targetId);
       if (targetElement) {
         e.preventDefault();
-        const offset = 80; // altura del navbar fijo
+        const offset = 80;
         const elementPosition = targetElement.getBoundingClientRect().top;
         const offsetPosition = elementPosition + window.pageYOffset - offset;
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: "smooth",
-        });
-        // Actualizar URL sin scroll brusco
+        window.scrollTo({ top: offsetPosition, behavior: "smooth" });
         history.pushState(null, null, targetId);
       }
     });
@@ -619,23 +685,19 @@ function setupSmoothScroll() {
 function highlightActiveMenu() {
   const sections = document.querySelectorAll("section[id]");
   const navLinks = document.querySelectorAll(".menu a");
-  const scrollPosition = window.scrollY + 100; // pequeño offset para activar antes
-
+  const scrollPosition = window.scrollY + 100;
   let currentSection = "";
-  sections.forEach((section) => {
+  sections.forEach(section => {
     const sectionTop = section.offsetTop;
     const sectionBottom = sectionTop + section.offsetHeight;
     if (scrollPosition >= sectionTop && scrollPosition < sectionBottom) {
       currentSection = section.getAttribute("id");
     }
   });
-
-  navLinks.forEach((link) => {
+  navLinks.forEach(link => {
     link.classList.remove("active");
     const href = link.getAttribute("href").substring(1);
-    if (href === currentSection) {
-      link.classList.add("active");
-    }
+    if (href === currentSection) link.classList.add("active");
   });
 }
 
@@ -643,113 +705,189 @@ function setupBackToTop() {
   const backBtn = document.getElementById("back-to-top");
   if (!backBtn) return;
   window.addEventListener("scroll", () => {
-    if (window.scrollY > 300) {
-      backBtn.classList.add("show");
-    } else {
-      backBtn.classList.remove("show");
-    }
+    if (window.scrollY > 300) backBtn.classList.add("show");
+    else backBtn.classList.remove("show");
   });
-  backBtn.addEventListener("click", () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  backBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+}
+
+// ========================
+// CARRUSEL DE IMÁGENES
+// ========================
+function setupCarousel() {
+  const slides = document.querySelector('.carousel-slide');
+  if (!slides) return;
+  const images = slides.querySelectorAll('img');
+  let currentIndex = 0;
+  const prevBtn = document.querySelector('.carousel-prev');
+  const nextBtn = document.querySelector('.carousel-next');
+  const dotsContainer = document.querySelector('.carousel-dots');
+  let autoInterval;
+
+  function createDots() {
+    dotsContainer.innerHTML = '';
+    images.forEach((_, i) => {
+      const dot = document.createElement('span');
+      dot.classList.add('dot');
+      if (i === currentIndex) dot.classList.add('active');
+      dot.addEventListener('click', () => goToSlide(i));
+      dotsContainer.appendChild(dot);
+    });
+  }
+
+  function goToSlide(index) {
+    currentIndex = (index + images.length) % images.length;
+    slides.style.transform = `translateX(-${currentIndex * 100}%)`;
+    document.querySelectorAll('.dot').forEach((dot, i) => {
+      dot.classList.toggle('active', i === currentIndex);
+    });
+  }
+
+  function nextSlide() { goToSlide(currentIndex + 1); }
+  function prevSlide() { goToSlide(currentIndex - 1); }
+
+  if (prevBtn) prevBtn.addEventListener('click', prevSlide);
+  if (nextBtn) nextBtn.addEventListener('click', nextSlide);
+
+  function startAutoSlide() { autoInterval = setInterval(nextSlide, 5000); }
+  function stopAutoSlide() { clearInterval(autoInterval); }
+
+  if (images.length > 0) {
+    createDots();
+    goToSlide(0);
+    startAutoSlide();
+    slides.addEventListener('mouseenter', stopAutoSlide);
+    slides.addEventListener('mouseleave', startAutoSlide);
+  }
+}
+
+// ========================
+// CONTACTO
+// ========================
+function setupContactForm() {
+  const form = document.getElementById('contact-form');
+  if (!form) return;
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = document.getElementById('contact-name').value;
+    const email = document.getElementById('contact-email').value;
+    const message = document.getElementById('contact-message').value;
+    alert(`Gracias ${name}, hemos recibido tu mensaje. Te contactaremos pronto a ${email}.`);
+    form.reset();
   });
 }
 
 // ========================
-// MANEJO DEL MODAL Y CHECKOUT (EXISTENTE)
+// INICIALIZACIÓN
 // ========================
 document.addEventListener("DOMContentLoaded", function () {
-  // Cargar preferencias iniciales
+  // Idioma
   const savedLang = localStorage.getItem("preferredLanguage");
   const select = document.getElementById("language");
-  if (savedLang && select.querySelector(`option[value="${savedLang}"]`)) {
-    select.value = savedLang;
-  } else {
-    select.value = "es";
-  }
+  if (savedLang && select.querySelector(`option[value="${savedLang}"]`)) select.value = savedLang;
+  else select.value = "es";
   window.changeLangReal();
   loadCart();
-  updateCartDisplay();
   loadOrders();
+  applyPeriodicDiscounts();
 
-  // Nuevas funcionalidades
+  // Navegación
   setupSmoothScroll();
   setupBackToTop();
   window.addEventListener("scroll", highlightActiveMenu);
-  highlightActiveMenu(); // Ejecutar una vez al inicio
+  highlightActiveMenu();
 
-  // Modal y checkout (código existente)
+  // Carrusel
+  setupCarousel();
+
+  // Contacto
+  setupContactForm();
+
+  // Modal carrito
   const modal = document.getElementById("cart-modal");
   const cartIcon = document.getElementById("cart-icon");
   const closeModalBtn = document.getElementById("close-modal");
   const checkoutBtn = document.getElementById("checkout-btn");
 
-  if (cartIcon) {
-    cartIcon.addEventListener("click", (e) => {
-      e.preventDefault();
-      if (modal) modal.style.display = "flex";
-      updateCartDisplay();
-    });
-  }
-
-  if (closeModalBtn) {
-    closeModalBtn.addEventListener("click", () => {
-      if (modal) modal.style.display = "none";
-    });
-  }
+  if (cartIcon) cartIcon.addEventListener("click", (e) => { e.preventDefault(); modal.style.display = "flex"; updateCartDisplay(); });
+  if (closeModalBtn) closeModalBtn.addEventListener("click", () => modal.style.display = "none");
+  if (modal) modal.addEventListener("click", (e) => { if (e.target === modal) modal.style.display = "none"; });
 
   if (checkoutBtn) {
     checkoutBtn.addEventListener("click", () => {
       if (cart.length === 0) {
         const lang = document.getElementById("language").value;
-        const emptyMsg =
-          (translations[lang] && translations[lang]["empty_cart"]) ||
-          "Tu carrito está vacío";
+        const emptyMsg = (translations[lang] && translations[lang]["empty_cart"]) || "Tu carrito está vacío";
         alert(emptyMsg);
         return;
       }
-      const orderId = createOrder();
+      const customerName = document.getElementById("customer-name").value.trim();
+      const userEmail = document.getElementById("user-email").value.trim();
+      const paymentMethod = document.getElementById("payment-method").value;
+      const termsAccepted = document.getElementById("terms-checkbox").checked;
+
+      if (!customerName) {
+        alert("Por favor ingresa tu nombre completo.");
+        return;
+      }
+      if (!userEmail) {
+        alert("Por favor ingresa tu correo para recibir la factura.");
+        return;
+      }
+      if (!termsAccepted) {
+        alert("Debes aceptar los términos y condiciones para continuar.");
+        return;
+      }
+
+      const orderId = createOrder(customerName, paymentMethod, userEmail);
       if (orderId) {
         const lang = document.getElementById("language").value;
-        const msg =
-          (translations[lang] && translations[lang]["order_created"]) ||
-          "✅ ¡Pedido creado! Tu número de seguimiento es: ";
+        const msg = (translations[lang] && translations[lang]["order_created"]) || "✅ ¡Pedido creado! Tu número de seguimiento es: ";
         alert(msg + orderId);
-        if (modal) modal.style.display = "none";
+        sendInvoiceEmail(orderId, getTotalUSD(), cart, userEmail, customerName, paymentMethod);
+        generatePDF(orderId, getTotalUSD(), cart, userEmail, customerName, paymentMethod);
+        modal.style.display = "none";
         displayTrackingResult(orderId);
         const trackingSection = document.getElementById("tracking");
-        if (trackingSection)
-          trackingSection.scrollIntoView({ behavior: "smooth" });
+        if (trackingSection) trackingSection.scrollIntoView({ behavior: "smooth" });
       }
     });
   }
 
-  if (modal) {
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) modal.style.display = "none";
-    });
-  }
-
+  // Rastreo
   const trackBtn = document.getElementById("tracking-btn");
   const trackInput = document.getElementById("tracking-id");
   if (trackBtn && trackInput) {
     trackBtn.addEventListener("click", () => {
       const orderId = trackInput.value.trim();
-      if (orderId === "") {
+      if (!orderId) {
         const lang = document.getElementById("language").value;
-        const emptyIdMsg =
-          (translations[lang] && translations[lang]["tracking_placeholder"]) ||
-          "Por favor ingresa un número de pedido";
-        alert(emptyIdMsg);
+        const emptyMsg = (translations[lang] && translations[lang]["tracking_placeholder"]) || "Ingresa un número de pedido";
+        alert(emptyMsg);
         return;
       }
       displayTrackingResult(orderId);
     });
   }
+
+  // País destino
+  const countrySelect = document.getElementById("destination-country");
+  if (countrySelect) {
+    countrySelect.addEventListener("change", updateShippingTime);
+    updateShippingTime();
+  }
+
+  // Política de privacidad
+  const privacyModal = document.getElementById("privacy-modal");
+  const openPrivacy = document.getElementById("open-privacy");
+  const closePrivacy = document.getElementById("close-privacy");
+  if (openPrivacy) openPrivacy.onclick = (e) => { e.preventDefault(); privacyModal.style.display = "flex"; };
+  if (closePrivacy) closePrivacy.onclick = () => privacyModal.style.display = "none";
 });
 
 // ========================
 // FUNCIÓN GLOBAL 'add'
 // ========================
-window.add = function (name, price, weight) {
-  addToCart(name, price, weight);
+window.add = function (name, priceUSD, weight) {
+  addToCart(name, priceUSD, weight);
 };

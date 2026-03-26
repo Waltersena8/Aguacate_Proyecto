@@ -2,17 +2,24 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Aguacates Colombia</title>
-    <link rel="stylesheet" href="Cs/styles.css" />
-
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=yes"
+    />
+    <title>Aguacates Colombia | Exportación Premium</title>
+    <link rel="stylesheet" href="Css/styles.css" />
+    <!-- jsPDF para generar PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- EmailJS (para factura) -->
+    <script
+      type="text/javascript"
+      src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"
+    ></script>
   </head>
-
   <body>
+    <!-- Barra de navegación -->
     <header class="navbar">
       <div class="logo">🥑 AgroCol</div>
-
       <nav class="menu">
         <a href="#inicio" data-translate="menu1">Inicio</a>
         <a href="#quienes" data-translate="menu2">Quiénes somos</a>
@@ -22,7 +29,6 @@
         <a href="#contacto" data-translate="menu6">Contacto</a>
         <a href="#tracking" data-translate="menu7">Rastreo</a>
       </nav>
-
       <select id="language" onchange="changeLang()">
         <option value="es">ES 🇪🇸</option>
         <option value="en">EN 🇬🇧</option>
@@ -31,87 +37,82 @@
         <option value="zh">中文 🇨🇳</option>
         <option value="ja">日本語 🇯🇵</option>
       </select>
-      <a href="#" class="cart-icon" id="cart-icon">
-        🛒 <span id="cart-count">0</span>
-      </a>
-      <a href="#" class="cta-btn" data-translate="cotizar">Cotizar</a>
+      <a href="#" class="cart-icon" id="cart-icon"
+        >🛒 <span id="cart-count">0</span></a
+      >
+      <a href="#contacto" class="cta-btn" data-translate="cotizar">Cotizar</a>
     </header>
 
+    <!-- SECCIÓN HERO -->
     <section class="hero" id="inicio">
       <div class="hero-text">
         <h1 data-translate="titulo">Exportamos Aguacate Hass Premium</h1>
         <p class="origen" data-translate="origen">
           🇨🇴 Orgullosamente colombiano
         </p>
-
         <p data-translate="descripcion">
           Desde Colombia hacia Europa y Asia. Calidad certificada, producción
           sostenible y logística internacional.
         </p>
-
         <div class="badges">
           <span data-translate="badge1">🌍 Exportación global</span>
           <span data-translate="badge2">🇩🇪 Colombia</span>
           <span data-translate="badge3">📦 Alta producción</span>
         </div>
-
         <div class="hero-buttons">
-          <a href="#" class="btn-primary" data-translate="btn1"
+          <a href="#contacto" class="btn-primary" data-translate="btn1"
             >Solicitar cotización</a
           >
-          <a href="#" class="btn-secondary" data-translate="btn2"
+          <a href="#producto" class="btn-secondary" data-translate="btn2"
             >Ver producto</a
           >
         </div>
       </div>
-
       <div class="hero-img">
         <div class="logo-container">
           <img src="img/images.webp" alt="logo" class="logo-img" />
         </div>
-
         <div class="circle-bg"></div>
       </div>
     </section>
 
-    <section class="producto" id="quienes">
-      <h2 data-translate="q1">Quiénes somos</h2>
-
-      <p class="subtitulo" data-translate="qdesc">
-        Somos una empresa colombiana dedicada a la producción y exportación de
-        aguacate Hass premium.
-      </p>
-
-      <div class="cards">
-        <div class="card scroll-img">
-          <h3 data-translate="q2">🌱 Misión</h3>
-          <p data-translate="q2d">
-            Brindar productos de alta calidad internacional.
-          </p>
-        </div>
-
-        <div class="card scroll-img">
-          <h3 data-translate="q3">🚀 Visión</h3>
-          <p data-translate="q3d">
-            Ser líderes en exportación hacia Europa y Asia.
-          </p>
-        </div>
-
-        <div class="card scroll-img">
-          <h3 data-translate="q4">💚 Valores</h3>
-          <p data-translate="q4d">Compromiso, calidad y sostenibilidad.</p>
+    <!-- QUIÉNES SOMOS (con imagen de fondo) -->
+    <section class="quienes-fondo" id="quienes">
+      <div class="overlay"></div>
+      <div class="contenido">
+        <h2 data-translate="q1">Quiénes somos</h2>
+        <p class="subtitulo" data-translate="qdesc">
+          Somos una empresa colombiana dedicada a la producción y exportación de
+          aguacate Hass premium.
+        </p>
+        <div class="cards">
+          <div class="card scroll-img">
+            <h3 data-translate="q2">🌱 Misión</h3>
+            <p data-translate="q2d">
+              Brindar productos de alta calidad internacional.
+            </p>
+          </div>
+          <div class="card scroll-img">
+            <h3 data-translate="q3">🚀 Visión</h3>
+            <p data-translate="q3d">
+              Ser líderes en exportación hacia Europa y Asia.
+            </p>
+          </div>
+          <div class="card scroll-img">
+            <h3 data-translate="q4">💚 Valores</h3>
+            <p data-translate="q4d">Compromiso, calidad y sostenibilidad.</p>
+          </div>
         </div>
       </div>
     </section>
 
+    <!-- PRODUCTO -->
     <section class="producto" id="producto">
       <h2 data-translate="p1">Nuestro Aguacate Hass</h2>
-
       <p class="subtitulo" data-translate="pdesc">
         Cultivado en tierras colombianas con estándares internacionales de
         calidad.
       </p>
-
       <div class="cards">
         <div class="card scroll-img">
           <img src="img/descargar.jpg" alt="" />
@@ -120,7 +121,6 @@
             Seleccionado bajo estrictos estándares de exportación.
           </p>
         </div>
-
         <div class="card scroll-img">
           <img src="img/images.webp" alt="" />
           <h3 data-translate="p3">Exportación Internacional</h3>
@@ -128,7 +128,6 @@
             Envíos constantes a Europa y Asia, especialmente Alemania.
           </p>
         </div>
-
         <div class="card scroll-img">
           <img src="img/descargar.jpg" alt="" />
           <h3 data-translate="p4">Producción Sostenible</h3>
@@ -139,23 +138,102 @@
       </div>
     </section>
 
-    <section id="product" class="section">
-      <h2 data-translate="catalogo">Catálogo Exportación</h2>
+    <!-- PROCESO DE EXPORTACIÓN -->
+    <section class="proceso" id="proceso">
+      <h2 data-translate="proceso_title">🚢 Proceso de Exportación</h2>
+      <div class="timeline">
+        <div class="step">
+          <div class="circle">1</div>
+          <h3 data-translate="step_proc1">Cosecha</h3>
+          <p data-translate="step_proc1d">Selección manual en finca.</p>
+        </div>
+        <div class="step">
+          <div class="circle">2</div>
+          <h3 data-translate="step_proc2">Empaque</h3>
+          <p data-translate="step_proc2d">
+            Empaque certificado para exportación.
+          </p>
+        </div>
+        <div class="step">
+          <div class="circle">3</div>
+          <h3 data-translate="step_proc3">Transporte</h3>
+          <p data-translate="step_proc3d">
+            Logística internacional refrigerada.
+          </p>
+        </div>
+        <div class="step">
+          <div class="circle">4</div>
+          <h3 data-translate="step_proc4">Entrega</h3>
+          <p data-translate="step_proc4d">
+            Llegada a puerto y distribución local.
+          </p>
+        </div>
+      </div>
+    </section>
 
+    <!-- MERCADOS INTERNACIONALES -->
+    <section class="mercado" id="mercado">
+      <h2 data-translate="mercado_title">🌎 Mercados Internacionales</h2>
       <div class="cards">
         <div class="card">
+          <h3 data-translate="mercado_alemania">🇩🇪 Alemania</h3>
+          <p data-translate="mercado_alemania_desc">
+            Principal destino en Europa, con demanda constante.
+          </p>
+        </div>
+        <div class="card">
+          <h3 data-translate="mercado_china">🇨🇳 China</h3>
+          <p data-translate="mercado_china_desc">
+            Mercado asiático en crecimiento.
+          </p>
+        </div>
+        <div class="card">
+          <h3 data-translate="mercado_japon">🇯🇵 Japón</h3>
+          <p data-translate="mercado_japon_desc">
+            Alta exigencia de calidad premium.
+          </p>
+        </div>
+        <div class="card">
+          <h3 data-translate="mercado_francia">🇫🇷 Francia</h3>
+          <p data-translate="mercado_francia_desc">
+            Gastronomía y alta rotación.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- CATÁLOGO CON PAQUETES Y DESCUENTOS (cards más grandes) -->
+    <section id="product" class="section">
+      <h2 data-translate="catalogo">Catálogo Exportación</h2>
+      <div class="cards large-cards">
+        <div class="card" data-discount="0" data-price-usd="25">
           <h3 data-translate="prod1">Caja Hass (4kg)</h3>
           <p class="price" data-price="25">$25 USD</p>
           <button onclick="add('Caja Hass 4kg', 25, 4)" data-translate="add">
             Añadir
           </button>
         </div>
-
-        <div class="card">
+        <div class="card" data-discount="5" data-price-usd="3000">
           <h3 data-translate="prod2">Media tonelada</h3>
           <p class="price" data-price="3000">$3000 USD</p>
+          <span class="discount-badge" data-translate="discount_period"
+            >🔥 Descuento temporal 5%</span
+          >
           <button
             onclick="add('Media tonelada', 3000, 500)"
+            data-translate="add"
+          >
+            Añadir
+          </button>
+        </div>
+        <div class="card" data-discount="10" data-price-usd="5500">
+          <h3 data-translate="prod3">Tonelada completa</h3>
+          <p class="price" data-price="5500">$5500 USD</p>
+          <span class="discount-badge" data-translate="discount_bulk"
+            >🎉 Descuento por volumen 10%</span
+          >
+          <button
+            onclick="add('Tonelada completa', 5500, 1000)"
             data-translate="add"
           >
             Añadir
@@ -164,6 +242,63 @@
       </div>
     </section>
 
+    <!-- CARRUSEL DE IMÁGENES -->
+    <section class="carousel-section">
+      <h2 data-translate="carousel_title">🌿 Nuestra finca y proceso</h2>
+      <div class="carousel-container">
+        <div class="carousel-slide">
+          <img
+            src="https://via.placeholder.com/1200x400?text=Finca+Colombiana"
+            alt="Finca"
+          />
+          <img
+            src="https://via.placeholder.com/1200x400?text=Cosecha+de+Aguacate"
+            alt="Cosecha"
+          />
+          <img
+            src="https://via.placeholder.com/1200x400?text=Empaque+Internacional"
+            alt="Empaque"
+          />
+          <img
+            src="https://via.placeholder.com/1200x400?text=Exportación+Global"
+            alt="Exportación"
+          />
+        </div>
+        <button class="carousel-prev">❮</button>
+        <button class="carousel-next">❯</button>
+      </div>
+      <div class="carousel-dots"></div>
+    </section>
+
+    <!-- CÓMO FUNCIONA -->
+    <section class="how-it-works">
+      <h2 data-translate="how_title">📦 ¿Cómo funciona?</h2>
+      <div class="steps">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <h3 data-translate="step1_title">Elige tu paquete</h3>
+          <p data-translate="step1_desc">
+            Selecciona la cantidad de aguacate que deseas comprar.
+          </p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <h3 data-translate="step2_title">Recibe actualizaciones</h3>
+          <p data-translate="step2_desc">
+            Sigue tu pedido en tiempo real con nuestro sistema de rastreo.
+          </p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <h3 data-translate="step3_title">Disfruta tu producto</h3>
+          <p data-translate="step3_desc">
+            Recibe aguacates frescos directamente en tu país.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODAL DEL CARRITO (con nuevos campos) -->
     <div id="cart-modal" class="modal">
       <div class="modal-content">
         <h3 data-translate="cart_title">🛒 Mi Carrito</h3>
@@ -171,6 +306,62 @@
         <div class="total-box">
           <strong data-translate="cart_total">Total:</strong>
           <span id="cart-total">$0</span>
+        </div>
+        <div class="shipping-info">
+          <label data-translate="country_selector">País de destino:</label>
+          <select id="destination-country">
+            <option value="es">Colombia 🇨🇴</option>
+            <option value="de">Alemania 🇩🇪</option>
+            <option value="fr">Francia 🇫🇷</option>
+            <option value="zh">China 🇨🇳</option>
+            <option value="ja">Japón 🇯🇵</option>
+          </select>
+          <p>
+            <strong data-translate="shipping_time"
+              >Tiempo estimado de envío:</strong
+            >
+            <span id="shipping-estimate">--</span>
+          </p>
+        </div>
+        <!-- Nuevos campos -->
+        <div class="customer-info">
+          <label data-translate="fullname_label">Nombre completo:</label>
+          <input
+            type="text"
+            id="customer-name"
+            placeholder="Ej: Juan Pérez"
+            data-translate="fullname_placeholder"
+            required
+          />
+
+          <label data-translate="payment_label">Método de pago:</label>
+          <select id="payment-method">
+            <option value="nequi" data-translate="payment_nequi">Nequi</option>
+            <option value="daviplata" data-translate="payment_daviplata">
+              Daviplata
+            </option>
+            <option value="bancolombia" data-translate="payment_bancolombia">
+              Bancolombia
+            </option>
+            <option value="card" data-translate="payment_card">
+              Tarjeta de crédito/débito
+            </option>
+          </select>
+
+          <label data-translate="email_label">Correo para factura:</label>
+          <input
+            type="email"
+            id="user-email"
+            placeholder="tu@email.com"
+            required
+          />
+
+          <label class="checkbox-label">
+            <input type="checkbox" id="terms-checkbox" required />
+            <span data-translate="terms_accept"
+              >Acepto los términos y condiciones</span
+            >
+          </label>
         </div>
         <button id="checkout-btn" class="btn-primary" data-translate="checkout">
           Finalizar compra
@@ -181,6 +372,7 @@
       </div>
     </div>
 
+    <!-- RASTREO DE PEDIDO -->
     <section id="tracking" class="tracking section">
       <h2 data-translate="tracking_title">📦 Rastreo de Pedido</h2>
       <p data-translate="tracking_desc">
@@ -202,18 +394,176 @@
         </button>
       </div>
       <div id="tracking-result" class="tracking-result"></div>
+      <div class="timeline-container" style="display: none">
+        <div class="timeline-steps">
+          <div class="step completed">Pedido creado</div>
+          <div class="step">En preparación</div>
+          <div class="step">En tránsito</div>
+          <div class="step">Entregado</div>
+        </div>
+      </div>
     </section>
 
+    <!-- APOYO A CAMPESINOS -->
+    <section class="support-section" id="apoyo">
+      <div class="container">
+        <h2 data-translate="support_title">
+          🌱 Apoyamos a los campesinos colombianos
+        </h2>
+        <p data-translate="support_desc">
+          Trabajamos directamente con más de 200 familias agricultoras,
+          garantizando precios justos y prácticas sostenibles.
+        </p>
+      </div>
+    </section>
+
+    <!-- UBICACIÓN EN TIEMPO REAL -->
+    <section class="location-section" id="ubicacion">
+      <h2 data-translate="location_title">📍 Nuestra ubicación</h2>
+      <p data-translate="location_desc">
+        Visítanos en nuestra finca principal en Antioquia, Colombia.
+      </p>
+      <div class="map-container">
+        <iframe
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3966.521260485874!2d-75.574278!3d6.244287!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8e4428dfb80fad05%3A0x42137cfcc7b83856!2sAntioquia%2C%20Colombia!5e0!3m2!1ses!2sco!4v1711234567890!5m2!1ses!2sco"
+          width="100%"
+          height="400"
+          style="border: 0; border-radius: 20px"
+          allowfullscreen=""
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+        ></iframe>
+      </div>
+    </section>
+
+    <!-- MÉTODOS DE PAGO -->
+    <section class="payment-section">
+      <h2 data-translate="payment_title">💳 Métodos de pago</h2>
+      <p data-translate="payment_subtitle">Aceptamos:</p>
+      <div class="payment-methods">
+        <span class="payment-badge" data-translate="payment_nequi">Nequi</span>
+        <span class="payment-badge" data-translate="payment_daviplata"
+          >Daviplata</span
+        >
+        <span class="payment-badge" data-translate="payment_bancolombia"
+          >Bancolombia</span
+        >
+        <span class="payment-badge" data-translate="payment_card"
+          >Tarjetas de crédito/débito</span
+        >
+      </div>
+    </section>
+
+    <!-- CONTACTO -->
+    <section class="contacto-section" id="contacto">
+      <h2 data-translate="contact_title">📞 Contáctanos</h2>
+      <p data-translate="contact_desc">
+        ¿Tienes preguntas? Escríbenos y te responderemos a la brevedad.
+      </p>
+      <form id="contact-form">
+        <input
+          type="text"
+          id="contact-name"
+          placeholder="Nombre"
+          data-translate="contact_name"
+          required
+        />
+        <input
+          type="email"
+          id="contact-email"
+          placeholder="Correo electrónico"
+          data-translate="contact_email_placeholder"
+          required
+        />
+        <textarea
+          id="contact-message"
+          rows="4"
+          placeholder="Mensaje"
+          data-translate="contact_message"
+        ></textarea>
+        <button type="submit" class="btn-primary" data-translate="contact_send">
+          Enviar mensaje
+        </button>
+      </form>
+      <div class="contact-alternatives">
+        <p>
+          <strong data-translate="contact_or"
+            >O contáctanos directamente:</strong
+          >
+        </p>
+        <a
+          href="https://wa.me/573123456789"
+          target="_blank"
+          class="btn-secondary"
+          >WhatsApp</a
+        >
+        <a href="mailto:info@agrocol.com" class="btn-secondary"
+          >info@agrocol.com</a
+        >
+      </div>
+    </section>
+
+    <!-- MODAL POLÍTICA DE PRIVACIDAD -->
+    <div id="privacy-modal" class="modal">
+      <div class="modal-content">
+        <h3 data-translate="privacy_title">Política de privacidad</h3>
+        <p data-translate="privacy_content">
+          Tus datos están seguros con nosotros. No compartimos información con
+          terceros sin tu consentimiento. Cumplimos con la normativa de
+          protección de datos.
+        </p>
+        <button id="close-privacy" class="cancel" data-translate="close">
+          Cerrar
+        </button>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="footer-links">
+        <a href="#" id="open-privacy" data-translate="privacy_title"
+          >Política de privacidad</a
+        >
+        <a href="mailto:info@agrocol.com" data-translate="contact_email"
+          >info@agrocol.com</a
+        >
+        <a
+          href="https://wa.me/573123456789"
+          target="_blank"
+          data-translate="contact_whatsapp"
+          >WhatsApp</a
+        >
+      </div>
+      <div class="footer-copy">© 2025 AgroCol - Aguacates de Colombia</div>
+    </footer>
+
+    <!-- BOTÓN FLOTANTE WHATSAPP -->
+    <a
+      href="https://wa.me/573123456789"
+      class="whatsapp-float"
+      target="_blank"
+      data-translate="contact_whatsapp"
+    >
+      <img
+        src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
+        alt="WhatsApp"
+        width="50"
+      />
+    </a>
+
+    <!-- BOTÓN VOLVER ARRIBA -->
     <button id="back-to-top" class="back-to-top" data-translate="back_to_top">
       ↑
     </button>
 
-    <script src="JS/javascript.js"></script>
-
+    <script src="Js/javascript.js"></script>
     <script>
       function changeLang() {
         window.changeLangReal();
       }
+      (function () {
+        emailjs.init("TU_PUBLIC_KEY"); // Reemplazar con tu clave pública
+      })();
     </script>
   </body>
 </html>
