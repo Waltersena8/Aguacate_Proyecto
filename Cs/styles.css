@@ -466,7 +466,7 @@ body {
 .parallax-bg {
   position: absolute;
   inset: -20%;
-  background: url("https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1600&q=80")
+  background: url("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ5HyxMUVODjvqnej5NADtM1WMgnhYhaOKngQ&s")
     center/cover no-repeat;
   will-change: transform;
   transition: transform 0.1s linear;
