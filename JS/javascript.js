@@ -1239,46 +1239,646 @@ function updateShippingEstimate() {
 // ========================
 // FORMULARIO DE CONTACTO
 // ========================
-function submitContact(event) {
-  event.preventDefault();
-  const name = document.getElementById("contact-name").value;
-  const email = document.getElementById("contact-email").value;
-  alert(`Gracias ${name}, hemos recibido tu mensaje. Te contactaremos pronto.`);
-  document.getElementById("contact-form").reset();
+/* ═══════════════════════════════════════
+   EMAILJS — GREEN GOLD COLOMBIA
+   Pega esto en tu javascript.js,
+   reemplazando la función submitContact
+   que ya tienes.
+   ═══════════════════════════════════════ */
+
+// 1️⃣  Inicializar EmailJS (ya lo tienes al final del HTML,
+//     pero asegúrate de que quede ASÍ en el <script> del HTML):
+//
+//     emailjs.init("LQMvHwzl2rppTTt0D");
+//
+//  Si ya tienes emailjs.init("TU_PUBLIC_KEY") cámbialo por el de arriba.
+
+// 2️⃣  Reemplaza tu función submitContact por esta:
+function submitContact(e) {
+  e.preventDefault();
+
+  const name = document.getElementById("contact-name").value.trim();
+  const email = document.getElementById("contact-email").value.trim();
+  const company = document.getElementById("contact-company").value.trim();
+  const country = document.getElementById("contact-country").value.trim();
+  const message = document.getElementById("contact-message").value.trim();
+
+  // Validaciones básicas
+  if (!name) {
+    showToast("⚠️ Ingresa tu nombre completo");
+    return;
+  }
+  if (!email || !email.includes("@")) {
+    showToast("⚠️ Ingresa un correo válido");
+    return;
+  }
+  if (!message) {
+    showToast("⚠️ Escribe tu mensaje");
+    return;
+  }
+
+  // Deshabilitar botón mientras envía
+  const btn = e.target.querySelector('button[type="submit"]');
+  const originalText = btn.textContent;
+  btn.textContent = "⏳ Enviando...";
+  btn.disabled = true;
+
+  // Parámetros que coinciden con las variables de tu plantilla EmailJS
+  const templateParams = {
+    name: name,
+    email: email,
+    company: company || "—",
+    country: country || "—",
+    message: message,
+    time: new Date().toLocaleString("es-CO", {
+      dateStyle: "full",
+      timeStyle: "short",
+    }),
+  };
+
+  // Enviar con EmailJS
+  emailjs
+    .send("service_07ofwfm", "template_8rn6pz5", templateParams)
+    .then(function () {
+      showToast(
+        "✅ Mensaje enviado, " + name + "! Te contactaremos pronto.",
+        "success",
+      );
+      e.target.reset();
+      btn.textContent = originalText;
+      btn.disabled = false;
+    })
+    .catch(function (error) {
+      console.error("EmailJS error:", error);
+      showToast(
+        "❌ Error al enviar. Intenta por WhatsApp o escríbenos al email.",
+        "error",
+      );
+      btn.textContent = originalText;
+      btn.disabled = false;
+    });
 }
 
-// ========================
-// CHECKOUT
-// ========================
+// ═══════════════════════════════════════════════
+//  REEMPLAZA tu función generarFacturaPDF completa
+// ═══════════════════════════════════════════════
+
+function generarFacturaPDF(
+  orderNum,
+  customerName,
+  customerEmail,
+  items, // items del carrito: cada uno con { name, priceUSD, weight }
+  totalUSD,
+  destino,
+  payMethod,
+) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+  const W = 210;
+  const verde = [26, 92, 26];
+  const verdeOscuro = [13, 61, 13];
+  const amarillo = [232, 160, 32];
+  const crema = [249, 246, 239];
+  const gris = [90, 106, 90];
+  const negro = [17, 26, 17];
+
+  // ── IDIOMA Y MONEDA según selector de idioma y país ──
+  const lang = document.getElementById("language")?.value || "es";
+  const country = document.getElementById("destination-country")?.value || "co";
+
+  // Tasas de cambio aproximadas vs USD
+  const rates = {
+    co: 4000,
+    de: 0.92,
+    fr: 0.92,
+    zh: 7.25,
+    ja: 150,
+    kr: 1380,
+    gb: 0.79,
+    en: 1,
+  };
+  const symbols = {
+    co: "COP",
+    de: "EUR",
+    fr: "EUR",
+    zh: "CNY",
+    ja: "JPY",
+    kr: "KRW",
+    gb: "GBP",
+    en: "USD",
+  };
+  const rate = rates[country] || 1;
+  const symbol = symbols[country] || "USD";
+
+  // Función para formatear precio en moneda local
+  function formatPrice(usd) {
+    const converted = usd * rate;
+    if (["ja", "kr"].includes(country))
+      return symbol + " " + Math.round(converted).toLocaleString();
+    return (
+      symbol +
+      " " +
+      converted.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })
+    );
+  }
+
+  // Textos por idioma
+  const txt = {
+    es: {
+      title: "FACTURA ELECTRÓNICA",
+      client: "DATOS DEL CLIENTE",
+      email: "Correo",
+      dest: "Destino",
+      product: "PRODUCTO",
+      qty: "CANT. (kg)",
+      unit: "PRECIO UNIT.",
+      sub: "SUBTOTAL",
+      total: "TOTAL",
+      pay: "MÉTODO DE PAGO",
+      ship: "TIEMPO DE ENVÍO",
+      thanks: "Gracias por apoyar a los campesinos colombianos",
+      thanksub:
+        "Con tu compra ayudas a más de 200 familias agricultoras del Eje Cafetero y Antioquia.",
+      terms: "TÉRMINOS Y CONDICIONES",
+      order: "No. Pedido",
+      date: "Fecha",
+      t1: "- Esta factura es válida como comprobante de compra oficial.",
+      t2: "- Los tiempos de envío son estimados y pueden variar.",
+      t3: "- Reclamaciones: info@greengoldcolombia.com o WhatsApp.",
+      currency: "Moneda",
+    },
+    en: {
+      title: "ELECTRONIC INVOICE",
+      client: "CUSTOMER INFO",
+      email: "Email",
+      dest: "Destination",
+      product: "PRODUCT",
+      qty: "QTY (kg)",
+      unit: "UNIT PRICE",
+      sub: "SUBTOTAL",
+      total: "TOTAL",
+      pay: "PAYMENT METHOD",
+      ship: "SHIPPING TIME",
+      thanks: "Thank you for supporting Colombian farmers",
+      thanksub:
+        "Your purchase helps over 200 farming families in the Colombian coffee region.",
+      terms: "TERMS & CONDITIONS",
+      order: "Order No.",
+      date: "Date",
+      t1: "- This invoice is valid as official proof of purchase.",
+      t2: "- Shipping times are estimates and may vary.",
+      t3: "- Claims: info@greengoldcolombia.com or WhatsApp.",
+      currency: "Currency",
+    },
+    de: {
+      title: "ELEKTRONISCHE RECHNUNG",
+      client: "KUNDENDATEN",
+      email: "E-Mail",
+      dest: "Zielland",
+      product: "PRODUKT",
+      qty: "MENGE (kg)",
+      unit: "STÜCKPREIS",
+      sub: "ZWISCHENSUMME",
+      total: "GESAMT",
+      pay: "ZAHLUNGSMETHODE",
+      ship: "LIEFERZEIT",
+      thanks: "Danke, dass Sie kolumbianische Bauern unterstützen",
+      thanksub:
+        "Ihr Kauf hilft über 200 Bauernfamilien in der kolumbianischen Kaffeeregion.",
+      terms: "AGB",
+      order: "Bestell-Nr.",
+      date: "Datum",
+      t1: "- Diese Rechnung gilt als offizieller Kaufnachweis.",
+      t2: "- Lieferzeiten sind Schätzungen und können variieren.",
+      t3: "- Reklamationen: info@greengoldcolombia.com oder WhatsApp.",
+      currency: "Währung",
+    },
+    fr: {
+      title: "FACTURE ÉLECTRONIQUE",
+      client: "DONNÉES CLIENT",
+      email: "E-mail",
+      dest: "Destination",
+      product: "PRODUIT",
+      qty: "QTÉ (kg)",
+      unit: "PRIX UNIT.",
+      sub: "SOUS-TOTAL",
+      total: "TOTAL",
+      pay: "MODE DE PAIEMENT",
+      ship: "DÉLAI DE LIVRAISON",
+      thanks: "Merci de soutenir les paysans colombiens",
+      thanksub:
+        "Votre achat aide plus de 200 familles agricoles de la région caféière.",
+      terms: "CONDITIONS GÉNÉRALES",
+      order: "N° Commande",
+      date: "Date",
+      t1: "- Cette facture est valable comme preuve officielle d'achat.",
+      t2: "- Les délais de livraison sont estimatifs.",
+      t3: "- Réclamations: info@greengoldcolombia.com ou WhatsApp.",
+      currency: "Devise",
+    },
+    zh: {
+      title: "电子发票",
+      client: "客户信息",
+      email: "邮箱",
+      dest: "目的地",
+      product: "产品",
+      qty: "数量 (kg)",
+      unit: "单价",
+      sub: "小计",
+      total: "总计",
+      pay: "支付方式",
+      ship: "预计送达时间",
+      thanks: "感谢您支持哥伦比亚农民",
+      thanksub: "您的购买帮助了哥伦比亚咖啡产区200多个农业家庭。",
+      terms: "条款与条件",
+      order: "订单号",
+      date: "日期",
+      t1: "- 本发票是官方购买凭证。",
+      t2: "- 运输时间为估算，可能有所不同。",
+      t3: "- 投诉: info@greengoldcolombia.com 或 WhatsApp。",
+      currency: "货币",
+    },
+    ja: {
+      title: "電子請求書",
+      client: "顧客情報",
+      email: "メール",
+      dest: "目的地",
+      product: "商品",
+      qty: "数量 (kg)",
+      unit: "単価",
+      sub: "小計",
+      total: "合計",
+      pay: "支払い方法",
+      ship: "配送時間",
+      thanks: "コロンビアの農家を支援していただきありがとうございます",
+      thanksub:
+        "あなたの購入はコロンビアのコーヒー地域の200以上の農家を支援します。",
+      terms: "利用規約",
+      order: "注文番号",
+      date: "日付",
+      t1: "- この請求書は公式の購入証明書として有効です。",
+      t2: "- 配送時間は目安であり、変動する場合があります。",
+      t3: "- お問い合わせ: info@greengoldcolombia.com または WhatsApp。",
+      currency: "通貨",
+    },
+  };
+
+  // ← DEJA TUS TEXTOS COMO ESTÁN
+  const t = txt[lang] || txt.es;
+
+  // Tiempos de envío (igual que lo tienes)
+  const tiempos = {
+    co: "2-5 dias / days",
+    de: "18-22 dias / Tage",
+    fr: "20-24 dias / jours",
+    zh: "28-35 dias / 天",
+    ja: "30-38 dias / 日",
+    kr: "32-40 dias",
+    gb: "16-20 dias / days",
+  };
+  const tiempoEnvio = tiempos[country] || "2-5 dias";
+
+  // ── HEADER (igual)
+  doc.setFillColor(...verdeOscuro);
+  doc.rect(0, 0, W, 52, "F");
+
+  doc.setFillColor(255, 205, 0);
+  doc.rect(0, 52, W * 0.5, 4, "F");
+  doc.setFillColor(0, 48, 135);
+  doc.rect(W * 0.5, 52, W * 0.25, 4, "F");
+  doc.setFillColor(206, 17, 38);
+  doc.rect(W * 0.75, 52, W * 0.25, 4, "F");
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(22);
+  doc.text("GREEN GOLD COLOMBIA", W / 2, 20, { align: "center" });
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(180, 220, 180);
+  doc.text("Exportacion Premium de Aguacate Hass", W / 2, 28, {
+    align: "center",
+  });
+
+  doc.setDrawColor(255, 255, 255);
+  doc.roundedRect(W / 2 - 40, 32, 80, 10, 5, 5, "S");
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "bold");
+  doc.text("COLOMBIA - HASS PREMIUM  |  " + symbol, W / 2, 38.5, {
+    align: "center",
+  });
+
+  // ── TÍTULO ──
+  doc.setFillColor(...crema);
+  doc.rect(0, 56, W, 20, "F");
+
+  doc.setTextColor(...verdeOscuro);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(15);
+  doc.text(t.title, 20, 68);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  doc.setTextColor(...gris);
+  doc.text(t.date + ": " + new Date().toLocaleDateString(), W - 20, 63, {
+    align: "right",
+  });
+  doc.text(t.order + ": " + orderNum, W - 20, 70, { align: "right" });
+
+  // ── DATOS CLIENTE ──
+  let y = 88;
+  doc.setFillColor(230, 242, 230);
+  doc.roundedRect(14, y - 6, W - 28, 28, 3, 3, "F");
+
+  doc.setTextColor(...verdeOscuro);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.text(t.client, 20, y + 1);
+  doc.setDrawColor(...verde);
+  doc.setLineWidth(0.3);
+  doc.line(20, y + 3, 80, y + 3);
+
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(...negro);
+  doc.setFontSize(10);
+  doc.text(customerName, 20, y + 10);
+
+  doc.setFontSize(9);
+  doc.setTextColor(...gris);
+  doc.text(t.email + ": " + customerEmail, 20, y + 17);
+  doc.text(
+    t.dest + ": " + destino + "  |  " + t.currency + ": " + symbol,
+    110,
+    y + 17,
+  );
+
+  // ── TABLA PRODUCTOS ──
+  y = 128;
+  doc.setFillColor(...verde);
+  doc.roundedRect(14, y, W - 28, 10, 2, 2, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8.5);
+  doc.text(t.product, 20, y + 7);
+  doc.text(t.qty, 98, y + 7, { align: "center" });
+  doc.text(t.unit, 143, y + 7, { align: "center" });
+  doc.text(t.sub, W - 20, y + 7, { align: "right" });
+
+  y += 12;
+
+  // Recorremos los items del carrito
+  items.forEach((item, i) => {
+    const itemName = item.name || "Producto";
+    const kg = item.weight || 0; // peso en kg
+    const unitPriceUSD = item.priceUSD || 0; // precio unitario en USD
+    const subtotalUSD = kg * unitPriceUSD; // subtotal en USD
+
+    if (i % 2 === 0) {
+      doc.setFillColor(249, 246, 239);
+      doc.rect(14, y - 5, W - 28, 10, "F");
+    }
+    doc.setTextColor(...negro);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.text(itemName, 20, y + 2);
+    doc.text(kg + " kg", 98, y + 2, { align: "center" });
+    doc.setTextColor(...verde);
+    doc.text(formatPrice(unitPriceUSD), 143, y + 2, { align: "center" });
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...negro);
+    doc.text(formatPrice(subtotalUSD), W - 20, y + 2, { align: "right" });
+    y += 10;
+  });
+
+  // Línea y TOTAL
+  doc.setDrawColor(...verde);
+  doc.setLineWidth(0.5);
+  doc.line(14, y + 2, W - 14, y + 2);
+  y += 8;
+
+  doc.setFillColor(...verde);
+  doc.roundedRect(100, y, W - 114, 16, 3, 3, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.text(t.total + ":", 108, y + 7);
+  doc.setFontSize(12);
+  doc.text(formatPrice(totalUSD), W - 18, y + 8, { align: "right" });
+
+  // USD equivalente si moneda != USD (y no COP para evitar confusión)
+  if (country !== "en" && country !== "co") {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    doc.setTextColor(200, 230, 200);
+    doc.text("(USD " + totalUSD.toLocaleString() + ")", W - 18, y + 13, {
+      align: "right",
+    });
+  }
+
+  y += 26;
+
+  // ── PAGO Y ENVÍO (igual)
+  doc.setFillColor(230, 242, 230);
+  doc.roundedRect(14, y, 85, 18, 3, 3, "F");
+  doc.setTextColor(...verdeOscuro);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.text(t.pay, 20, y + 6);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(...negro);
+  doc.setFontSize(10);
+  doc.text(payMethod, 20, y + 14);
+
+  doc.setFillColor(230, 242, 230);
+  doc.roundedRect(W - 99, y, 85, 18, 3, 3, "F");
+  doc.setTextColor(...verdeOscuro);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.text(t.ship, W - 93, y + 6);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(...negro);
+  doc.setFontSize(10);
+  doc.text(tiempoEnvio, W - 93, y + 14);
+
+  y += 28;
+
+  // ── NOTA CAMPESINOS ──
+  doc.setFillColor(...amarillo);
+  doc.roundedRect(14, y, W - 28, 22, 3, 3, "F");
+  doc.setTextColor(26, 16, 0);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.text(t.thanks, W / 2, y + 8, { align: "center" });
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  const thankLines = doc.splitTextToSize(t.thanksub, W - 40);
+  doc.text(thankLines, W / 2, y + 15, { align: "center" });
+
+  y += 30;
+
+  // ── TÉRMINOS ──
+  doc.setFillColor(240, 247, 240);
+  doc.roundedRect(14, y, W - 28, 26, 3, 3, "F");
+  doc.setTextColor(...gris);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  doc.text(t.terms, 20, y + 7);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7.5);
+  doc.text(t.t1, 20, y + 13);
+  doc.text(t.t2, 20, y + 18);
+  doc.text(t.t3, 20, y + 23);
+
+  // ── FOOTER ──
+  doc.setFillColor(...verdeOscuro);
+  doc.rect(0, 272, W, 25, "F");
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.text("Green Gold Colombia", W / 2, 281, { align: "center" });
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8);
+  doc.setTextColor(180, 220, 180);
+  doc.text(
+    "info@greengoldcolombia.com  -  wa.me/573123456789  -  Antioquia, Colombia",
+    W / 2,
+    287,
+    { align: "center" },
+  );
+
+  doc.setTextColor(100, 150, 100);
+  doc.setFontSize(7);
+  doc.text(
+    "2025 Green Gold Colombia - Exportacion Premium de Aguacate Hass",
+    W / 2,
+    293,
+    { align: "center" },
+  );
+
+  doc.save("Factura_" + orderNum + "_GreenGoldColombia.pdf");
+}
+
+// ═══════════════════════════════════════════════
+//  FIX 2 — REEMPLAZA tu función trackOrder
+// ═══════════════════════════════════════════════
+
+function trackOrder() {
+  const id = document.getElementById("tracking-id").value.trim();
+  const result = document.getElementById("tracking-result");
+
+  if (!id) {
+    showToast("⚠️ Ingresa un número de pedido");
+    return;
+  }
+
+  const statuses = [
+    { label: "Pedido creado", icon: "📋", done: true, active: false },
+    { label: "En preparacion", icon: "📦", done: true, active: false },
+    { label: "En transito", icon: "✈️", done: false, active: true },
+    { label: "Entregado", icon: "🎯", done: false, active: false },
+  ];
+
+  result.innerHTML = `
+    <div class="tracking-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+        <div>
+          <div style="font-size:12px;color:var(--gris);margin-bottom:4px;">Número de pedido</div>
+          <div style="font-family:var(--font-display);font-size:1.3rem;font-weight:700;color:var(--verde);">${id}</div>
+        </div>
+        <span style="background:var(--amarillo);color:#1a1000;padding:4px 12px;border-radius:50px;font-size:12px;font-weight:700;">✈️ En tránsito</span>
+      </div>
+      <p style="font-size:14px;color:var(--gris);margin-bottom:20px;">Tu pedido está en tránsito hacia su destino. Llegada estimada en 12 días.</p>
+      <div class="tracking-steps">
+        ${statuses
+          .map(
+            (s) => `
+          <div class="tracking-step ${s.done ? "completed" : ""} ${s.active ? "active" : ""}">
+            <div class="tracking-step-dot">${s.done ? "✓" : s.active ? "→" : ""}</div>
+            <div class="tracking-step-label">${s.label}</div>
+          </div>
+        `,
+          )
+          .join("")}
+      </div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════
+//  FIX 3 — REEMPLAZA tu función checkout
+// ═══════════════════════════════════════════════
+
 function checkout() {
   if (cart.length === 0) {
-    const lang = document.getElementById("language").value;
-    alert(translations[lang].empty_cart);
-    return;
-  }
-  const customerName = document.getElementById("customer-name").value.trim();
-  const userEmail = document.getElementById("user-email").value.trim();
-  const paymentMethod = document.getElementById("payment-method").value;
-  const termsChecked = document.getElementById("terms-checkbox").checked;
-
-  if (!customerName || !userEmail) {
-    alert("Por favor completa todos los datos.");
-    return;
-  }
-  if (!termsChecked) {
-    alert("Debes aceptar los términos y condiciones.");
+    showToast("⚠️ Tu carrito está vacío");
     return;
   }
 
-  const orderId = createOrder(customerName, paymentMethod, userEmail);
-  if (orderId) {
-    const lang = document.getElementById("language").value;
-    alert(translations[lang].order_created + orderId);
-    document.getElementById("cart-modal").classList.remove("open");
-    showView("tracking");
-    document.getElementById("tracking-id").value = orderId;
-    displayTrackingResult(orderId);
+  const name = document.getElementById("customer-name").value.trim();
+  const email = document.getElementById("user-email").value.trim();
+  const terms = document.getElementById("terms-checkbox").checked;
+  const payEl = document.getElementById("payment-method");
+  const payText = payEl.options[payEl.selectedIndex].text;
+
+  if (!name) {
+    showToast("⚠️ Ingresa tu nombre completo");
+    return;
   }
+  if (!email || !email.includes("@")) {
+    showToast("⚠️ Ingresa un correo válido");
+    return;
+  }
+  if (!terms) {
+    showToast("⚠️ Debes aceptar los términos y condiciones");
+    return;
+  }
+
+  const orderNum = "GGC-" + Math.floor(100000 + Math.random() * 900000);
+  const total = cart.reduce((s, i) => s + (i.total || i.price * i.qty), 0);
+  const countryEl = document.getElementById("destination-country");
+  const countryName = countryEl.options[countryEl.selectedIndex].text;
+
+  // Modal confirmación
+  document.getElementById("order-number").textContent = orderNum;
+  document.getElementById("confirm-text").textContent =
+    "Hola " +
+    name +
+    "! Tu pedido por $" +
+    total.toLocaleString() +
+    " USD hacia " +
+    countryName +
+    " ha sido procesado. " +
+    "Descarga tu factura a continuación.";
+
+  document.getElementById("cart-modal").classList.remove("open");
+  document.getElementById("confirm-modal").classList.add("open");
+
+  // Generar PDF automáticamente
+  try {
+    generarFacturaPDF(
+      orderNum,
+      name,
+      email,
+      [...cart],
+      total,
+      countryName,
+      payText,
+    );
+  } catch (e) {
+    console.error("Error PDF:", e);
+    showToast("⚠️ Error al generar el PDF: " + e.message);
+  }
+
+  // Limpiar carri
+  cart = [];
+  document.getElementById("cart-count").textContent = "0";
 }
 
 // ========================
@@ -1346,7 +1946,9 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("checkout-btn").addEventListener("click", checkout);
 
   // Rastreo
-  const trackBtn = document.getElementById("tracking-btn");
+  const trackBtn = document
+    .getElementById("tracking-btn")
+    .addEventListener("click", function () {});
   const trackInput = document.getElementById("tracking-id");
   trackBtn.addEventListener("click", () => {
     const orderId = trackInput.value.trim();
@@ -1464,3 +2066,28 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 5000);
   }
 });
+
+function sendInvoiceEmail(
+  orderId,
+  totalUSD,
+  items,
+  userEmail,
+  customerName,
+  paymentMethod,
+) {
+  const lang = document.getElementById("language").value;
+  const totalFormatted = formatPrice(totalUSD, lang);
+  const templateParams = {
+    to_email: userEmail,
+    order_id: orderId,
+    total: totalFormatted,
+    items: items.map((i) => `${i.name} (${i.weight}kg)`).join(", "),
+    date: new Date().toLocaleString(),
+    customer_name: customerName,
+    payment_method: paymentMethod,
+  };
+  emailjs
+    .send("service_lh4j3bm", "template_y4g51vl", templateParams)
+    .then(() => alert("Factura enviada a " + userEmail))
+    .catch((err) => console.error("Error al enviar:", err));
+}
